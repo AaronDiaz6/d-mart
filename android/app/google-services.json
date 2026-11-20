@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "696937856793",
+    "project_id": "dmart-diaz",
+    "storage_bucket": "dmart-diaz.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:696937856793:android:09e9207fb1e7ab0a95cf88",
+        "android_client_info": {
+          "package_name": "com.example.d_mart"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA7kJuTNYb5jK2AoHKq2XR_9nUe9KROWw4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

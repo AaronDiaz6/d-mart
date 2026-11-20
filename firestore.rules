@@ -1,0 +1,49 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function isAdmin() {
+      return signedIn() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // users/{uid}: each person can read/update their own profile (never their role)
+    match /users/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow create: if signedIn() && request.auth.uid == uid &&
+        request.resource.data.role ==
+          (request.auth.token.email == 'admin@dmart.com' ? 'admin' : 'customer');
+      allow update: if signedIn() && request.auth.uid == uid &&
+        request.resource.data.role == resource.data.role;
+      allow delete: if false;
+
+      match /cart/{item}     { allow read, write: if signedIn() && request.auth.uid == uid; }
+      match /wishlist/{item} { allow read, write: if signedIn() && request.auth.uid == uid; }
+    }
+
+    // products: everyone signed in can read; only admins create/delete;
+    // customers may only change "stock" (when an order is placed or cancelled)
+    match /products/{pid} {
+      allow read: if signedIn();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() ||
+        (signedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stock']));
+    }
+
+    // orders: customers create/read their own, may cancel a pending order and
+    // delete a cancelled one; admins can read, update and delete all orders
+    match /orders/{oid} {
+      allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
+      allow read: if signedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow update: if isAdmin() ||
+        (signedIn() && resource.data.userId == request.auth.uid &&
+         resource.data.status == 'Pending' &&
+         request.resource.data.status == 'Cancelled' &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']));
+      allow delete: if isAdmin() ||
+        (signedIn() && resource.data.userId == request.auth.uid &&
+         resource.data.status == 'Cancelled');
+    }
+  }
+}
